@@ -171,7 +171,10 @@ class EopCrawler(object):
                             time.sleep(0.5)
             except Exception as e:
                 with open(os.path.join(parentdir, "log.txt"), "a") as f:
-                    f.write(e.args[1] + " at " + imgPath + "\r\n")
+                    errinfo = ""
+                    for ii in range(0,len(e.args)):
+                        errinfo += " " + e.args[ii]
+                    f.write(errinfo + "\r\n")
                     continue
             i += 1
         # 下载简谱
@@ -190,7 +193,10 @@ class EopCrawler(object):
                             time.sleep(0.5)
             except Exception as e:
                 with open(os.path.join(dir, "log.txt"), "a") as f:
-                    f.write(e + "\r\n")
+                    errinfo = ""
+                    for ii in range(0,len(e.args)):
+                        errinfo += " " + e.args[ii]
+                    f.write(errinfo + "\r\n")
                     continue
             i += 1
         # 保存信息
