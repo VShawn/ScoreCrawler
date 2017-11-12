@@ -196,6 +196,7 @@ class EopCrawler(object):
         # 保存信息
         with open(os.path.join(path, item.title + ".txt"), "w") as f:
             f.write("      Form:\t\t" + item.url + "\r\n")
+            f.write("        ID:\t\t" + item.strid + "\r\n")
             f.write("UpdateDate:\t\t" + item.date + "\r\n")
             f.write("   Sorting:\t\tShawn\r\n")
         return
