@@ -28,4 +28,4 @@ class EopPageItem(object):
     # 获取存储路径
     def getSavePath(self, parentdir):
         # 文件夹取个长名字，免得重复了
-        return os.path.join(parentdir, self.title + "_" + self.author + "_" + self.strid)
+        return os.path.join(parentdir, self.title + "____" + self.author + "_" + self.strid)

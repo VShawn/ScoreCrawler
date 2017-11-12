@@ -4,13 +4,13 @@ import shutil
 
 if __name__ == '__main__':
     # 爬虫的工作模式：0：全站扫描覆盖已有；1：全站扫描跳过已有；2：按id降序排序依次爬取直至遇到一个曾经爬过的项目
-    workMode = 0
+    workMode = 1
     # 乐谱保存的路径
-    path = "D:\music"
+    path = "D:\Piano"
     # 开始页
     start = 1
     # 结束页
-    end = 2
+    end = 859
 
     ec = EopCrawler()
     for i in range(start, end + 1):
@@ -21,7 +21,7 @@ if __name__ == '__main__':
             items = ec.getPageItems(html)
             j = 1
             for item in items:
-                print(str(j) + " / " + str(len(items)))
+                print(str(ji) + ":" + str(j) + " / " + str(len(items)))
                 j += 1
                 # 先简单地通过文件夹名来判断是否已经下载过
                 savePath = item.getSavePath(path)
