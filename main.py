@@ -21,7 +21,7 @@ if __name__ == '__main__':
             items = ec.getPageItems(html)
             j = 1
             for item in items:
-                print(str(ji) + ":" + str(j) + " / " + str(len(items)))
+                print(str(i) + ":" + str(j) + " / " + str(len(items)))
                 j += 1
                 # 先简单地通过文件夹名来判断是否已经下载过
                 savePath = item.getSavePath(path)
