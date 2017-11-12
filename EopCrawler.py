@@ -4,12 +4,16 @@ import gzip
 import urllib.request
 import http.cookiejar
 import urllib.parse
+import os.path
+import time
 
 class EopCrawler(object):
     def __init__(self):
         return
-    UrlPage = "htt  p://www.everyonepiano.cn/Music.html?canshu=cn_edittime&paixu=desc&p="
 
+    UrlPage = "http://www.everyonepiano.cn/Music.html?canshu=cn_edittime&paixu=desc&p="
+    UrlHome = "http://www.everyonepiano.cn"
+    op = None
 
     headers = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -41,12 +45,13 @@ class EopCrawler(object):
         op.addheaders = h
         return op
 
-    def getHtml(self, url):
-        op = self.getopener(self.headers)
+    def getHtml (self, url):
+        if self.op is None:
+            self.op = self.getopener(self.headers)
         html = None
-        with op.open(url) as f:
+        with self.op.open(url) as f:
             if f.status == 200:
-                op_key = op.open(url)
+                op_key = self.op.open(url)
                 data = op_key.read()
                 op_key.close()
                 html = self.ungzip(data).decode()
@@ -57,9 +62,8 @@ class EopCrawler(object):
 
     def getPageItems(self, html):
         rootSoup = BeautifulSoup(html, 'lxml')
-        #获得#EOPMain中的所有class=MusicIndexBox的div
+        # 获得#EOPMain中的所有class=MusicIndexBox的div
         selector = rootSoup.select('div.MusicIndexBox')
-
         '''
                     <div class="MusicIndexBox">
                       <div class="MITitle">
@@ -115,17 +119,80 @@ class EopCrawler(object):
         #遍历处理div
         items = []
         for child in selector:
-            print(child)
             strid = str(child.select('div.MITitle > div')[0].string)
             author = str(child.select('div.MITitle > a')[1].string)
             title = str(child.select('div.MITitle > a')[0].string)
             title = title.replace("-" + author, '')
             url = child.select('div.MITitle > a')[0]['href']
-            url = 'http://www.everyonepiano.cn/' + url
+            url = self.UrlHome + url
             date = child.select('div.MIMusicUpdate')[0].string
             items.append(EopPageItem(strid, url, date,title,author))
-            return items
+        return items
 
-    # 下载简谱
-    def downLoadNumber(self, item):
+    # 分析出谱子图片的url
+    def getImgUrls(self, item):
+        # 处理五线谱页
+        html = self.getHtml(item.staveUrl)
+        if html is not None:
+            rootSoup = BeautifulSoup(html, 'lxml')
+            # 获得#EOPMain中的所有class=MusicIndexBox的div
+            selector = rootSoup.select('div.PngDiv > ul > li')
+            for child in selector:
+                item.staveImgs.append(self.UrlHome + child.select('img')[0]['src'])
+        return item
+        # 处理简谱页
         html = self.getHtml(item.numberUrl)
+        if html is not None:
+            rootSoup = BeautifulSoup(html, 'lxml')
+            # 获得#EOPMain中的所有class=MusicIndexBox的div
+            selector = rootSoup.select('div.PngDiv > ul > li')
+            for child in selector:
+                item.numberImgs.append(self.UrlHome + child.select('img')[0]['src'])
+
+    # 执行谱子下载
+    def doDownLoadImgs(self,item, dir):
+        # 文件夹取个长名字，免得重复了
+        path = os.path.join(dir, item.title + "_" + item.author + "_" + item.strid)
+        if os.path.exists(path) is False:
+            os.makedirs(path)
+        if self.op is None:
+            self.op = self.getopener(self.headers)
+        i = 1
+        # 下载五线谱
+        for url in item.staveImgs:
+            imgPath = os.path.join(path, item.title + "_stave_" + str(i).zfill(3) + ".jpg")
+            try:
+                with self.op.open(url) as f:
+                    if f.status == 200:
+                        with open(imgPath, 'wb') as o:
+                            o.write(f.read())
+                            print('成功下载 -> %s' % imgPath)
+                            o.close()
+                            # 等待,爬得太快容易被发现
+                            time.sleep(0.5)
+            except Exception as e:
+                with open(os.path.join(dir, "log.txt"), "a") as f:
+                    f.write(e.args[1] + " at " + imgPath + "\r\n")
+                    continue
+            i += 1
+        # 下载简谱
+        i = 1
+        # 下载五线谱
+        for url in item.numberImgs:
+            try:
+                with self.op.open(url) as f:
+                    imgPath = os.path.join(path, item.title + "_number_" + i.zfill(3) + ".jpg")
+                    if f.status == 200:
+                        with open(imgPath, 'wb') as o:
+                            o.write(f.read())
+                            print('成功下载 -> %s' % imgPath)
+                            o.close()
+                            # 等待,爬得太快容易被发现
+                            time.sleep(0.5)
+            except Exception as e:
+                with open(os.path.join(dir, "log.txt"), "a") as f:
+                    f.write(e + "\r\n")
+                    continue
+            i += 1
+        return
+
