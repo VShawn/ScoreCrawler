@@ -7,11 +7,12 @@ import urllib.parse
 import os.path
 import time
 
+
 class EopCrawler(object):
     def __init__(self):
         return
 
-    UrlPage = "http://www.everyonepiano.cn/Music.html?canshu=cn_edittime&paixu=desc&p="
+    UrlPage = "http://www.everyonepiano.cn/Music.html?canshu=id&paixu=desc&p="
     UrlHome = "http://www.everyonepiano.cn"
     op = None
 
@@ -116,7 +117,7 @@ class EopCrawler(object):
                       </div>
                     </div>
         '''
-        #遍历处理div
+        # 遍历处理div
         items = []
         for child in selector:
             strid = str(child.select('div.MITitle > div')[0].string)
@@ -135,24 +136,22 @@ class EopCrawler(object):
         html = self.getHtml(item.staveUrl)
         if html is not None:
             rootSoup = BeautifulSoup(html, 'lxml')
-            # 获得#EOPMain中的所有class=MusicIndexBox的div
             selector = rootSoup.select('div.PngDiv > ul > li')
             for child in selector:
                 item.staveImgs.append(self.UrlHome + child.select('img')[0]['src'])
-        return item
         # 处理简谱页
         html = self.getHtml(item.numberUrl)
         if html is not None:
             rootSoup = BeautifulSoup(html, 'lxml')
-            # 获得#EOPMain中的所有class=MusicIndexBox的div
             selector = rootSoup.select('div.PngDiv > ul > li')
             for child in selector:
                 item.numberImgs.append(self.UrlHome + child.select('img')[0]['src'])
+        return item
 
     # 执行谱子下载
-    def doDownLoadImgs(self,item, dir):
-        # 文件夹取个长名字，免得重复了
-        path = os.path.join(dir, item.title + "_" + item.author + "_" + item.strid)
+    def doDownLoadImgs(self,item, parentdir):
+        # 储存路径
+        path = item.getSavePath(parentdir)
         if os.path.exists(path) is False:
             os.makedirs(path)
         if self.op is None:
@@ -171,7 +170,7 @@ class EopCrawler(object):
                             # 等待,爬得太快容易被发现
                             time.sleep(0.5)
             except Exception as e:
-                with open(os.path.join(dir, "log.txt"), "a") as f:
+                with open(os.path.join(parentdir, "log.txt"), "a") as f:
                     f.write(e.args[1] + " at " + imgPath + "\r\n")
                     continue
             i += 1
@@ -181,7 +180,7 @@ class EopCrawler(object):
         for url in item.numberImgs:
             try:
                 with self.op.open(url) as f:
-                    imgPath = os.path.join(path, item.title + "_number_" + i.zfill(3) + ".jpg")
+                    imgPath = os.path.join(path, item.title + "_number_" + str(i).zfill(3) + ".jpg")
                     if f.status == 200:
                         with open(imgPath, 'wb') as o:
                             o.write(f.read())
@@ -194,5 +193,10 @@ class EopCrawler(object):
                     f.write(e + "\r\n")
                     continue
             i += 1
+        # 保存信息
+        with open(os.path.join(path, item.title + ".txt"), "w") as f:
+            f.write("      Form:\t\t" + item.url + "\r\n")
+            f.write("UpdateDate:\t\t" + item.date + "\r\n")
+            f.write("   Sorting:\t\tShawn\r\n")
         return
 

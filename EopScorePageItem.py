@@ -1,3 +1,6 @@
+import os.path
+
+
 # 一篇谱子的抽象类
 class EopPageItem(object):
     def __init__(self, strid,url, date,title,author):
@@ -22,3 +25,7 @@ class EopPageItem(object):
             'title:', self.title, ',',
             'author:', self.author, ',',
         )
+    # 获取存储路径
+    def getSavePath(self, parentdir):
+        # 文件夹取个长名字，免得重复了
+        return os.path.join(parentdir, self.title + "_" + self.author + "_" + self.strid)
