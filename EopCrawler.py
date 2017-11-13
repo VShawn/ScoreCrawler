@@ -6,6 +6,7 @@ import http.cookiejar
 import urllib.parse
 import os.path
 import time
+import codecs
 
 
 class EopCrawler(object):
@@ -55,7 +56,7 @@ class EopCrawler(object):
                 op_key = self.op.open(url)
                 data = op_key.read()
                 op_key.close()
-                html = self.ungzip(data).decode()
+                html = self.ungzip(data).decode('utf-8')
         return html
 
 
@@ -156,8 +157,9 @@ class EopCrawler(object):
             os.makedirs(path)
         if self.op is None:
             self.op = self.getopener(self.headers)
-        i = 1
+
         # 下载五线谱
+        i = 1
         for url in item.staveImgs:
             imgPath = os.path.join(path, item.title + "_stave_" + str(i).zfill(3) + ".jpg")
             try:
@@ -168,18 +170,22 @@ class EopCrawler(object):
                             print('成功下载 -> %s' % imgPath)
                             o.close()
                             # 等待,爬得太快容易被发现
-                            time.sleep(0.5)
+                            # time.sleep(0.5)
             except Exception as e:
-                with open(os.path.join(parentdir, "log.txt"), "a") as f:
-                    errinfo = ""
-                    for ii in range(0,len(e.args)):
-                        errinfo += " " + e.args[ii]
+                with codecs.open(os.path.join(parentdir, "log.txt"), "a", "UTF-8") as f:
+                    errinfo = ''
+                    for ii in range(0, len(e.args)):
+                        arg = e.args[ii]
+                        if self.isNum(arg):
+                            arg = str(arg)
+                        errinfo += ' ' + arg
+                    errinfo += ' stavD=> ' + imgPath
                     f.write(errinfo + "\r\n")
                     continue
             i += 1
+
         # 下载简谱
         i = 1
-        # 下载五线谱
         for url in item.numberImgs:
             try:
                 with self.op.open(url) as f:
@@ -192,18 +198,41 @@ class EopCrawler(object):
                             # 等待,爬得太快容易被发现
                             time.sleep(0.5)
             except Exception as e:
-                with open(os.path.join(dir, "log.txt"), "a") as f:
-                    errinfo = ""
-                    for ii in range(0,len(e.args)):
-                        errinfo += " " + e.args[ii]
+                with codecs.open(os.path.join(parentdir, "log.txt"), "a", "UTF-8") as f:
+                    errinfo = ''
+                    for ii in range(0, len(e.args)):
+                        arg = e.args[ii]
+                        if self.isNum(arg):
+                            arg = str(arg)
+                        errinfo += ' ' + arg
+                    errinfo += ' numbD=> ' + imgPath
                     f.write(errinfo + "\r\n")
                     continue
             i += 1
         # 保存信息
-        with open(os.path.join(path, item.title + ".txt"), "w") as f:
-            f.write("      Form:\t\t" + item.url + "\r\n")
-            f.write("        ID:\t\t" + item.strid + "\r\n")
-            f.write("UpdateDate:\t\t" + item.date + "\r\n")
-            f.write("   Sorting:\t\tShawn\r\n")
+        try:
+            with open(os.path.join(path, item.title + ".txt"), "w") as f:
+                f.write("      Form:\t\t" + item.url + "\r\n")
+                f.write("        ID:\t\t" + item.strid + "\r\n")
+                f.write("UpdateDate:\t\t" + item.date + "\r\n")
+                f.write("   Sorting:\t\tShawn\r\n")
+        except Exception as e:
+            with codecs.open(os.path.join(parentdir, "log.txt"), "a", "UTF-8") as f:
+                errinfo = ''
+                for ii in range(0, len(e.args)):
+                    arg = e.args[ii]
+                    if self.isNum(arg):
+                        arg = str(arg)
+                    errinfo += ' ' + arg
+                errinfo += ' writeInfo=> ' + os.path.join(path, item.title + ".txt")
+                f.write(errinfo + "\r\n")
         return
 
+    # 判断是否为数字
+    def isNum(self, value):
+        try:
+            value + 1
+        except TypeError:
+            return False
+        else:
+            return True

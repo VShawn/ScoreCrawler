@@ -28,4 +28,20 @@ class EopPageItem(object):
     # 获取存储路径
     def getSavePath(self, parentdir):
         # 文件夹取个长名字，免得重复了
-        return os.path.join(parentdir, self.title + "____" + self.author + "_" + self.strid)
+        path = os.path.join(parentdir, self.rep(self.title) + " (" + self.rep(self.author) + ")_" + self.strid)
+        return path
+
+    def rep(self,val):
+        # 去掉特殊字符 懒得写正则
+        v = val.replace("|", "")
+        v = v.replace(":", "")
+        v = v.replace("<", "")
+        v = v.replace(">", "")
+        v = v.replace("?", "")
+        v = v.replace("*", "")
+        v = v.replace("/", "")
+        v = v.replace("\\", "")
+        v = v.replace("\r", "")
+        v = v.replace("\n", "")
+        return v
+
