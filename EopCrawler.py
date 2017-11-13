@@ -159,9 +159,10 @@ class EopCrawler(object):
             self.op = self.getopener(self.headers)
 
         # 下载五线谱
-        i = 1
+        i = 0
         for url in item.staveImgs:
-            imgPath = os.path.join(path, item.title + "_stave_" + str(i).zfill(3) + ".jpg")
+            i += 1
+            imgPath = os.path.join(path, item.rep(item.title) + "_stave_" + str(i).zfill(3) + ".jpg")
             try:
                 with self.op.open(url) as f:
                     if f.status == 200:
@@ -182,14 +183,14 @@ class EopCrawler(object):
                     errinfo += ' stavD=> ' + imgPath
                     f.write(errinfo + "\r\n")
                     continue
-            i += 1
 
         # 下载简谱
-        i = 1
+        i = 0
         for url in item.numberImgs:
+            i += 1
             try:
                 with self.op.open(url) as f:
-                    imgPath = os.path.join(path, item.title + "_number_" + str(i).zfill(3) + ".jpg")
+                    imgPath = os.path.join(path, item.rep(item.title) + "_number_" + str(i).zfill(3) + ".jpg")
                     if f.status == 200:
                         with open(imgPath, 'wb') as o:
                             o.write(f.read())
@@ -208,10 +209,9 @@ class EopCrawler(object):
                     errinfo += ' numbD=> ' + imgPath
                     f.write(errinfo + "\r\n")
                     continue
-            i += 1
         # 保存信息
         try:
-            with open(os.path.join(path, item.title + ".txt"), "w") as f:
+            with open(os.path.join(path, item.rep(item.title) + ".txt"), "w") as f:
                 f.write("      Form:\t\t" + item.url + "\r\n")
                 f.write("        ID:\t\t" + item.strid + "\r\n")
                 f.write("UpdateDate:\t\t" + item.date + "\r\n")
@@ -224,7 +224,7 @@ class EopCrawler(object):
                     if self.isNum(arg):
                         arg = str(arg)
                     errinfo += ' ' + arg
-                errinfo += ' writeInfo=> ' + os.path.join(path, item.title + ".txt")
+                errinfo += ' writeInfo=> ' + os.path.join(path, item.rep(item.title) + ".txt")
                 f.write(errinfo + "\r\n")
         return
 

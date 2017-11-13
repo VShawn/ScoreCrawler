@@ -43,5 +43,5 @@ class EopPageItem(object):
         v = v.replace("\\", "")
         v = v.replace("\r", "")
         v = v.replace("\n", "")
-        return v
+        return v.strip()
 
